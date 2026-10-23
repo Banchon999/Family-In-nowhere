@@ -4,8 +4,11 @@ const TILE = 32;            // พิกเซลต่อช่องที่ 
 const PX = 16;              // ความละเอียดสไปรท์ (pixel art)
 const MAP_W = 64, MAP_H = 64, NT = MAP_W * MAP_H;
 const TPS = 20;             // tick ต่อวินาทีที่ความเร็ว 1x
-const DAY = 2400;           // tick ต่อวัน (2 นาทีจริงที่ 1x)
-const HOUR = DAY / 24;
+// ความยาววันปรับได้ในเมนู (ค่า tick ต่อวัน) — อัตราต่างๆ ที่คิดเป็นต่อวันคูณด้วย DS
+const BASE_DAY = 2400;      // 2 นาทีจริงที่ 1x
+let DAY = 6000, HOUR = DAY / 24, DS = BASE_DAY / DAY;
+const DAY_LENGTHS = [{ min: 3, ticks: 3600 }, { min: 5, ticks: 6000 }, { min: 8, ticks: 9600 }, { min: 12, ticks: 14400 }];
+function setDayLen(ticks) { DAY = ticks; HOUR = DAY / 24; DS = BASE_DAY / DAY; }
 const SEASON_DAYS = 6, YEAR_DAYS = 24;
 const SAVE_KEY = 'fin_save_v1', LEGACY_KEY = 'fin_legacy_v1';
 

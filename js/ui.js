@@ -604,12 +604,19 @@ const SHEETS = {
       b.append(g);
       b.append(h('h4', null, 'ตั้งค่า'));
       const opt = (key, label) => h('label', { class: 'toggle' }, h('input', { type: 'checkbox', id: 'opt_' + key, ...(G.settings[key] ? { checked: '' } : {}), onclick: e => { G.settings[key] = e.target.checked; } }), ' ' + label);
+      b.append(h('div', { class: 'small' }, 'ความยาว 1 วันในเกม (ที่ความเร็ว ▶ ปกติ)'));
+      b.append(dayLenPicker(DAY, t => { changeDayLen(t); toast(`⏱️ 1 วันในเกม = ${DAY_LENGTHS.find(d => d.ticks === t).min} นาที`, 'good'); renderSheet(); }));
       b.append(opt('peaceful', 'โหมดสงบ (ไม่มีโจร/สัตว์คลั่ง)'));
       b.append(h('label', { class: 'toggle' }, h('input', { type: 'checkbox', id: 'opt_quest', ...(G.settings.showQuest !== false ? { checked: '' } : {}), onclick: e => { G.settings.showQuest = e.target.checked; } }), ' แสดงเป้าหมายแนะนำ'));
       b.append(h('p', { class: 'small muted' }, `ครอบครัว${G.surname} • วันที่ ${dayNum()} • เกิด ${G.stats.born} • ขับไล่โจร ${G.stats.raidsWon} ครั้ง`));
     },
   },
 };
+function dayLenPicker(cur, onPick) {
+  const row = h('div', { class: 'tabs daylen' });
+  for (const d of DAY_LENGTHS) row.append(h('button', { class: d.ticks === cur ? 'on' : '', onclick: () => onPick(d.ticks) }, `${d.min} นาที`));
+  return row;
+}
 function spriteImg(spr) {
   const c = mkCanvas(32, 32);
   const x = c.getContext('2d');
@@ -647,7 +654,7 @@ function rollFamily() {
   const surname = U.pick(SURNAMES);
   const dadAge = U.ri(27, 36), momAge = U.clamp(dadAge + U.ri(-5, 2), 24, 38);
   NG = {
-    surname,
+    surname, dayLen: NG ? NG.dayLen : 6000, peace: NG ? NG.peace : false,
     members: [
       { role: 'พ่อ', gender: 'm', age: dadAge, name: U.pick(NAMES_M), traits: randTraits(2), shirt: U.pick(SHIRT), skin: U.pick(SKIN), hair: U.pick(HAIR) },
       { role: 'แม่', gender: 'f', age: momAge, name: U.pick(NAMES_F), traits: randTraits(2), shirt: U.pick(SHIRT), skin: U.pick(SKIN), hair: U.pick(HAIR) },
@@ -676,11 +683,13 @@ function showNewGame() {
     h('p', { class: 'muted' }, 'คุณได้รับครอบครัวเล็กๆ หลงทางมาอยู่ในดินแดนไร้นาม มีเสบียงติดตัวเพียงเล็กน้อย'),
     fam,
     h('h4', null, 'โบนัสมรดกที่ใช้'), perks,
-    h('label', { class: 'toggle' }, h('input', { type: 'checkbox', id: 'ngPeace' }), ' โหมดสงบ (ไม่มีโจรบุก เหมาะกับมือใหม่)'),
+    h('h4', null, 'ความยาว 1 วันในเกม'),
+    dayLenPicker(NG.dayLen, t => { NG.dayLen = t; showNewGame(); }),
+    h('label', { class: 'toggle' }, h('input', { type: 'checkbox', id: 'ngPeace', ...(NG.peace ? { checked: '' } : {}), onclick: e => { NG.peace = e.target.checked; } }), ' โหมดสงบ (ไม่มีโจรบุก เหมาะกับมือใหม่)'),
     h('div', { class: 'menu-btns row' },
       h('button', { class: 'btn', onclick: () => showMainMenu() }, '← กลับ'),
       h('button', { class: 'btn', onclick: () => { rollFamily(); showNewGame(); } }, '🎲 สุ่มครอบครัวใหม่'),
-      h('button', { class: 'btn primary', onclick: () => { const pc = $('ngPeace').checked; newGame(NG, { peaceful: pc }); NG = null; startLoop(); } }, '🌱 เริ่มชีวิตใหม่')));
+      h('button', { class: 'btn primary', onclick: () => { const pc = $('ngPeace').checked; newGame(NG, { peaceful: pc, dayLen: NG.dayLen }); NG = null; startLoop(); } }, '🌱 เริ่มชีวิตใหม่')));
   showScreen(box);
 }
 function showLegacy() {

@@ -46,6 +46,8 @@ function loadGame(str) {
       else if (k === 'items') G.items = new Map(o.items.map(([i, t, n]) => [i, { t, n }]));
       else G[k] = o[k];
     }
+    setDayLen(G.dayLen || BASE_DAY);
+    G.dayLen = DAY;
     initDerived();
     G.fx = []; G.sel = null; G.paused = false;
     for (const id in G.bld) { const b = G.bld[id]; b.inc = {}; if (b.cur) b.cur.inc = {}; }

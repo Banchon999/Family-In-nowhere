@@ -3,7 +3,9 @@ const LOOP = { running: false, last: 0, acc: 0, lastUi: 0 };
 
 function newGame(ng, opts = {}) {
   const seed = Math.floor(Math.random() * 1e9);
+  setDayLen(opts.dayLen || 6000);
   G = {
+    dayLen: DAY,
     version: 1, seed, tick: Math.floor(6 * HOUR), speed: 1, paused: false,
     bld: {}, nextId: 1, pawns: [], animals: [], raiders: [], items: new Map(),
     research: { done: {}, cur: null, prog: {} },
@@ -102,9 +104,9 @@ function gameTick() {
   if (t % 30 === 0) updateTemps();
   if (t % 20 === 0) recount();
   if (t % 60 === 0) { plantsTick(); checkQuest(); raidCheck(); cleanup(); }
-  if (t % 240 === 0) spoilTick();
+  if (t % Math.round(DAY / 10) === 0) spoilTick();
   if (t % 120 === 0) assignBeds();
-  if (t % 300 === 0) storyTick();
+  if (t % Math.round(DAY / 8) === 0) storyTick();
   if (t % 600 === 0) babyAlerts();
   if (G.trader && t > G.trader.until) { G.trader = null; addLog('🐫 พ่อค้าออกเดินทางแล้ว', ''); if (UI.sheet === 'trade') closeSheet(); }
   const hr = t % DAY;
@@ -156,3 +158,30 @@ window.addEventListener('load', () => {
     try { navigator.serviceWorker.register('sw.js').catch(() => { }); } catch (e) { }
   }
 });
+
+// เปลี่ยนความยาววันกลางเกม: ปรับเวลาที่บันทึกเป็น tick ทั้งหมดให้ตรงกับมาตรฐานใหม่
+function changeDayLen(ticks) {
+  if (!G || ticks === DAY) return;
+  const f = ticks / DAY, old = G.tick;
+  const sc = v => (v ? Math.round(v * f) : v);
+  G.tick = Math.round(old * f);
+  const sh = v => (v ? v - old + G.tick : v);
+  for (const p of G.pawns) {
+    if (!p.dead) endJob(p);
+    for (const m of p.mem) m.until = sc(m.until);
+    p.inspired = sc(p.inspired); p.tended = sc(p.tended); p.learnCd = sc(p.learnCd);
+    p.lastConceiveRoll = sc(p.lastConceiveRoll); p.joined = sc(p.joined);
+    if (p.brk) p.brk.until = sc(p.brk.until);
+    if (p.pregnant) p.pregnant.due = sc(p.pregnant.due);
+    p.nextThink = G.tick; p.bubble = null;
+  }
+  for (const a of G.animals) { a.leaveAt = sc(a.leaveAt); a.fleeUntil = sh(a.fleeUntil); a.nextThink = sh(a.nextThink); }
+  for (const r of G.raiders) r.repath = G.tick;
+  if (G.story.tempUntil) G.story.tempUntil = sc(G.story.tempUntil);
+  if (G.story.raid) G.story.raid.start = sc(G.story.raid.start);
+  if (G.trader) G.trader.until = sc(G.trader.until);
+  G.ping = null; G.fx = [];
+  setDayLen(ticks);
+  G.dayLen = ticks;
+  updateTemps();
+}

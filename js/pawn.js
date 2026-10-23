@@ -178,13 +178,13 @@ function pawnTick(p) {
   const st = lifeStage(p);
   const sleeping = p.job && p.job.type === 'sleep' && p.job.asleep;
   // ความต้องการ
-  let fr = 0.025 * (st === 'baby' ? 0.65 : st === 'child' ? 0.75 : st === 'kid' ? 0.85 : 1);
+  let fr = 0.025 * DS * (st === 'baby' ? 0.65 : st === 'child' ? 0.75 : st === 'kid' ? 0.85 : 1);
   if (hasTrait(p, 'glutton')) fr *= 1.4;
   if (p.pregnant) fr *= 1.2;
   if (sleeping || p.downed) fr *= 0.6;
   p.food = Math.max(0, p.food - fr);
-  if (!sleeping && !p.downed) p.rest = Math.max(0, p.rest - (st === 'baby' ? 0.05 : 0.035));
-  if (st !== 'adult' && st !== 'teen') p.joy = Math.max(0, p.joy - 0.022);
+  if (!sleeping && !p.downed) p.rest = Math.max(0, p.rest - (st === 'baby' ? 0.05 : 0.035) * DS);
+  if (st !== 'adult' && st !== 'teen') p.joy = Math.max(0, p.joy - 0.022 * DS);
   // อารมณ์ค่อยๆ เข้าหาเป้า
   if (p.moodTarget !== undefined) p.mood += (p.moodTarget - p.mood) * 0.004;
   if (p.cd > 0) p.cd--;
@@ -211,29 +211,29 @@ function unstick(p) {
 function healthTick(p, sleeping) {
   if (p.downed) {
     if (p.tended < G.tick && p.hp < 0) {
-      p.hp -= 0.012; // เลือดออก
+      p.hp -= 0.012 * DS; // เลือดออก
       if (p.hp <= -40) return killPawn(p, 'เสียเลือดมากเกินไป');
     }
   }
   if (p.food <= 0) {
-    p.hp -= 0.005;
+    p.hp -= 0.005 * DS;
     if (p.hp <= -40) return killPawn(p, 'อดอาหาร');
   }
   if (p.sick) {
     const s = p.sick, tended = p.tended > G.tick;
-    s.sev += tended ? -0.00006 * (1 + p.tendQ) : 0.00012;
-    s.imm += 0.00016 * (sleeping ? 1.6 : 1) * (tended ? 1.4 : 1) * (hasTrait(p, 'sickly') ? 0.7 : 1);
+    s.sev += (tended ? -0.00006 * (1 + p.tendQ) : 0.00012) * DS;
+    s.imm += 0.00016 * DS * (sleeping ? 1.6 : 1) * (tended ? 1.4 : 1) * (hasTrait(p, 'sickly') ? 0.7 : 1);
     if (s.imm >= 1 || s.sev <= 0) { p.sick = null; addLog(`💪 ${p.name} หายป่วยแล้ว`, 'good'); }
     else if (s.sev >= 1) return killPawn(p, 'ป่วยหนัก');
   }
   // หนาว/ร้อนจัด
   if (p.temp !== undefined) {
-    if (p.temp < comfortMin(p) - 12) p.hp -= 0.006;
-    else if (p.temp > 42) p.hp -= 0.005;
+    if (p.temp < comfortMin(p) - 12) p.hp -= 0.006 * DS;
+    else if (p.temp > 42) p.hp -= 0.005 * DS;
   }
   // ฟื้นฟู
   if (p.food > 5 && (!p.sick || p.sick.sev < 0.5)) {
-    let h = 0.004 * (sleeping || p.downed ? 3 : 1) * (p.tended > G.tick ? 1.5 + p.tendQ : 1);
+    let h = 0.004 * DS * (sleeping || p.downed ? 3 : 1) * (p.tended > G.tick ? 1.5 + p.tendQ : 1);
     if (p.downed && p.hp < 0 && p.tended < G.tick) h = 0;
     p.hp = Math.min(p.maxHp, p.hp + h);
   }
@@ -1087,7 +1087,7 @@ const JOBRUN = {
       setStage(j, 1); j.asleep = true;
     }
     const bed = j.bed >= 0 ? G.bld[j.bed] : null;
-    p.rest = Math.min(100, p.rest + (bed ? 0.13 : 0.09));
+    p.rest = Math.min(100, p.rest + (bed ? 0.13 : 0.09) * DS);
     const day = !isNight();
     const done = j.sickRest ? (!p.sick || p.rest >= 100) && day : (day && (p.rest > 85 || hourNow() > 9)) || (p.rest >= 100 && p.food < 20);
     if (done || (lifeStage(p) === 'baby' && p.food < 15 && U.chance(0.01))) {
@@ -1224,7 +1224,7 @@ const JOBRUN = {
     if (!b || !G.research.cur) return endJob(p);
     if (!arrive(p, j.t, true)) return;
     const id = G.research.cur;
-    G.research.prog[id] = (G.research.prog[id] || 0) + workSpeed(p, 'research') * 0.1;
+    G.research.prog[id] = (G.research.prog[id] || 0) + workSpeed(p, 'research') * 0.1 * Math.pow(DS, 0.8);
     gainXp(p, 'research', 1);
     if (G.research.prog[id] >= RESEARCH[id].cost) finishResearch(id);
     if (++j.prog > 600 || p.rest < 20 || p.food < 25) endJob(p);
