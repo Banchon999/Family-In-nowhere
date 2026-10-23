@@ -1,0 +1,16 @@
+{
+  "name": "ครอบครัวไร้ถิ่น — Family in Nowhere",
+  "short_name": "ครอบครัวไร้ถิ่น",
+  "description": "เกมเอาชีวิตรอดแนวครอบครัว สร้างบ้าน เลี้ยงลูก สืบทอดตระกูล",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#16120f",
+  "theme_color": "#16120f",
+  "lang": "th",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
